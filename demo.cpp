@@ -10,6 +10,7 @@ public:
 
   void run() override {
     while (!glfwWindowShouldClose(_window)) {
+      changeScene();
 
       // Comandos de entrada
       processInput();
@@ -20,10 +21,10 @@ public:
       // etc...
 
       glm::mat4 transform = glm::mat4(1.0f);
-      // transform = glm::translate(transform, glm::vec3(0.5f, 0.286f, 0.0f));
-      transform = glm::rotate(transform, (float)glfwGetTime()+100,
-                              glm::vec3(0.0f, 0.0f, 1.0f));
-      //transform = glm::translate(transform, glm::vec3(-0.5f, 0.0f, -0.5f));
+      //transform = glm::translate(transform, glm::vec3(0.5f, 0.286f, 0.0f));
+      //transform = glm::rotate(transform, (float)glfwGetTime(),
+      //                      glm::vec3(0.0f, 0.0f, 1.0f));
+      //transform = glm::translate(transform, glm::vec3(+0.1f, 0.0f, 0.0f));
 
       glUseProgram(shaderProgramId);
       unsigned int transformLoc =
@@ -37,28 +38,45 @@ public:
       glfwPollEvents();
     }
   }
-
-  void prepare() {
-    float _vertices[] = {
-                      -0.5f, 0.0f, 0.0f,   //left triangle1 ok
-                      0.0f, -0.3f, 0.0f,    //right
-                      0.0f, 0.0f, 0.0f, //top
-                      0.0f, 0.5f, 0.0f,   //left triangle2
-                      -0.3f, 0.0f, 0.0f,    //right
-                      0.0f, 0.0f, 0.0f, //top
-                      0.5f, 0.0f, 0.0f,   //left triangle3
-                      0.0f, 0.3f, 0.0f,    //right
-                      0.0f, 0.0f, 0.0f, //top
-                      0.0f, -0.5f, 0.0f,   //left triangle4
-                      0.3f, 0.0f, 0.0f,    //right
-                      0.0f, 0.0f, 0.0f //top
-                    };
+  void changeScene(){
+    for (int i=0; i<_vertices.size(); i++)
+      if(i%3==0)
+        _vertices.at(i)+=0.005f;
 
     glGenVertexArrays(1, &_VAO);
     glGenBuffers(1, &_VBO);
     glBindVertexArray(_VAO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(_vertices), _vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * _vertices.size(), _vertices.data(), GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
+                          (void *)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  }
+  void prepare() {
+    float array[] = {
+                      -0.15f, 0.0f, 0.0f,   //left triangle1 ok
+                      0.0f, -0.1f, 0.0f,    //right
+                      0.0f, 0.0f, 0.0f, //top
+                      0.0f, 0.15f, 0.0f,   //left triangle2
+                      -0.1f, 0.0f, 0.0f,    //right
+                      0.0f, 0.0f, 0.0f, //top
+                      0.15f, 0.0f, 0.0f,   //left triangle3
+                      0.0f, 0.1f, 0.0f,    //right
+                      0.0f, 0.0f, 0.0f, //top
+                      0.0f, -0.15f, 0.0f,   //left triangle4
+                      0.1f, 0.0f, 0.0f,    //right
+                      0.0f, 0.0f, 0.0f //top
+                    };
+    _vertices.insert(_vertices.begin(), array, array + 9*4);
+    glGenVertexArrays(1, &_VAO);
+    glGenBuffers(1, &_VBO);
+    glBindVertexArray(_VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * _vertices.size(), _vertices.data(), GL_STATIC_DRAW);
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float),
                           (void *)0);
@@ -137,6 +155,7 @@ public:
   }
 
 protected:
+  std::vector<float> _vertices;
   const char *_vertexShader;
   int shaderProgramId;
   unsigned int _VBO, _VAO;
