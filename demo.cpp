@@ -214,7 +214,8 @@ public:
     if (!succes) {
       char infoLog[512];
       glGetShaderInfoLog(vertexShaderId, 512, NULL, infoLog);
-      std::cerr << "Vertex shader error: " << infoLog << std::endl;
+      //debug
+      //std::cerr << "Vertex shader error: " << infoLog << std::endl;
     }
     return vertexShaderId;
   }
