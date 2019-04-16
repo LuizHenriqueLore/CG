@@ -3,6 +3,18 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <math.h>
+
+#define MOVE_TOP 1
+#define MOVE_BOTTOM 2
+#define MOVE_LEFT 3
+#define MOVE_RIGHT 4
+
+#define DEFAULT_ROTATE_SPEED 0.05
+#define SPEED_UP 0.0011 
+#define SPEED_DOWN -0.0011
+
+#define MOVE_SPEED 0.02f
 
 class Demo : public cgicmc::Window {
 public:
@@ -10,10 +22,61 @@ public:
 
   void run() override {
     while (!glfwWindowShouldClose(_window)) {
-      changeScene();
 
-      // Comandos de entrada
-      processInput();
+      stateW = glfwGetKey(_window, GLFW_KEY_W);
+      stateS = glfwGetKey(_window, GLFW_KEY_S);
+      stateA = glfwGetKey(_window, GLFW_KEY_A);
+      stateD = glfwGetKey(_window, GLFW_KEY_D);
+
+      stateQ = glfwGetKey(_window, GLFW_KEY_Q);
+      stateE = glfwGetKey(_window, GLFW_KEY_E);
+      stateSpace = glfwGetKey(_window, GLFW_KEY_SPACE);
+      
+
+      //não permite andar na diagonal
+      /*if (stateW == GLFW_PRESS){
+        moveObject(MOVE_TOP);
+      }else{
+        if (stateS == GLFW_PRESS){
+          moveObject(MOVE_BOTTOM);
+        }else{
+          if (stateA == GLFW_PRESS){
+            moveObject(MOVE_LEFT);
+          }else{
+            if (stateD == GLFW_PRESS){
+              moveObject(MOVE_RIGHT);
+            }
+          }
+        }
+      }*/
+
+      //movimentação (permite andar na diagonal)
+      if (stateW == GLFW_PRESS)
+        moveObject(MOVE_TOP);
+      if (stateS == GLFW_PRESS)
+        moveObject(MOVE_BOTTOM);
+      if (stateA == GLFW_PRESS)
+        moveObject(MOVE_LEFT);
+      if (stateD == GLFW_PRESS)
+        moveObject(MOVE_RIGHT);
+
+      //para ou retorna a rotação
+      if(stateSpace == GLFW_PRESS && spaceReleased)  
+        changeRotation();
+      else
+        if(stateSpace == GLFW_RELEASE)
+          spaceReleased = 1;
+
+      //altera a velocidade da rotação
+      if(stateQ == GLFW_PRESS)  
+        changeSpeedRotation(SPEED_UP);
+      else
+        if(stateE == GLFW_PRESS)  
+          changeSpeedRotation(SPEED_DOWN);
+      
+
+      rotateObject(rotateSpeed);
+      changeScene();
 
       // Comandos de renderizacao vao aqui
       glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
@@ -38,11 +101,58 @@ public:
       glfwPollEvents();
     }
   }
-  void changeScene(){
-    for (int i=0; i<_vertices.size(); i++)
-      if(i%3==0)
-        _vertices.at(i)+=0.005f;
+  void changeSpeedRotation(float val){
+    if(!((val>0 && rotateSpeed>0.5f) || (val<0 && rotateSpeed<-0.5f)))
+      rotateSpeed+= val;
+    std::cout << rotateSpeed << "\n";
+  }
 
+  void changeRotation(){
+    if(rotateSpeed!=0){
+      oldRotateSpeed = rotateSpeed;
+      rotateSpeed = 0;
+    }
+    else
+      rotateSpeed = oldRotateSpeed;
+
+    spaceReleased = 0;
+    
+  }
+
+  void moveObject(int dir){
+    //check if object stay in some border and translate
+    if(dir==MOVE_RIGHT)
+      if(!(_vertices.at(6) + MOVE_SPEED> 1.0f))
+        for (int i=0; i<_vertices.size(); i+=3)
+          _vertices.at(i)+=MOVE_SPEED;
+    if(dir==MOVE_LEFT)
+      if(!(_vertices.at(6) - MOVE_SPEED< -1.0f))
+        for (int i=0; i<_vertices.size(); i+=3)
+          _vertices.at(i)-=MOVE_SPEED;
+    if(dir==MOVE_TOP)
+      if(!(_vertices.at(7) + MOVE_SPEED> 1.0f))
+        for (int i=1; i<_vertices.size(); i+=3)
+          _vertices.at(i)+=MOVE_SPEED;
+    if(dir==MOVE_BOTTOM)
+      if(!(_vertices.at(7) - MOVE_SPEED< -1.0f))
+        for (int i=1; i<_vertices.size(); i+=3)
+          _vertices.at(i)-=MOVE_SPEED;
+  }
+  void rotateObject(float angle){
+    float x, y;
+    //centro do catavento
+    float x1 = _vertices.at(6);
+    float y1 = _vertices.at(7);
+    for (int i=0; i<_vertices.size(); i+=3){
+      //translado o catavento para o centro
+      x = _vertices.at(i) - x1;
+      y = _vertices.at(i+1) - y1;
+      //realizo a rotação e translado para a posição de origem
+      _vertices.at(i)=(x*cos(angle) - y*sin(angle)) + x1;
+      _vertices.at(i+1)=(x*sin(angle) + y*cos(angle)) + y1;
+    }
+  }
+  void changeScene(){
     glGenVertexArrays(1, &_VAO);
     glGenBuffers(1, &_VBO);
     glBindVertexArray(_VAO);
@@ -159,6 +269,10 @@ protected:
   const char *_vertexShader;
   int shaderProgramId;
   unsigned int _VBO, _VAO;
+  float rotateSpeed = DEFAULT_ROTATE_SPEED, oldRotateSpeed = DEFAULT_ROTATE_SPEED;
+  int stateW, stateS, stateA, stateD;
+  int stateSpace, stateQ, stateE;
+  int spaceReleased = 1;
 };
 
 int main(int argc, char const *argv[]) {
