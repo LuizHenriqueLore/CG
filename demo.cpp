@@ -104,7 +104,8 @@ public:
   void changeSpeedRotation(float val){
     if(!((val>0 && rotateSpeed>0.5f) || (val<0 && rotateSpeed<-0.5f)))
       rotateSpeed+= val;
-    std::cout << rotateSpeed << "\n";
+    //debug
+    //std::cout << rotateSpeed << "\n";
   }
 
   void changeRotation(){
